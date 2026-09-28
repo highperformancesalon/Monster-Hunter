@@ -284,53 +284,42 @@ class Player {
     direction.normalize();
     const normal = new Phaser.Math.Vector2(-direction.y, direction.x);
 
-    // Bright ignition right at the hunter's hand.
-    graphics.fillStyle(0xfff4a3, 1);
-    graphics.fillCircle(origin.x, origin.y, 7);
-    graphics.fillStyle(0xff8a18, 0.95);
-    graphics.fillCircle(origin.x + direction.x * 7, origin.y + direction.y * 7, 9);
+    // Small ignition flash at the hunter's hand.
+    graphics.fillStyle(0xfff3a0, 1);
+    graphics.fillCircle(origin.x, origin.y, 6);
+    graphics.fillStyle(0xff7a0a, 0.9);
+    graphics.fillCircle(origin.x + direction.x * 8, origin.y + direction.y * 8, 8);
 
-    // Layered flame stream: hot white/yellow core with wider orange/red tongues.
-    graphics.lineStyle(15, 0xff4b0a, 0.34);
-    graphics.lineBetween(origin.x, origin.y, impactPoint.x, impactPoint.y);
-    graphics.lineStyle(8, 0xff8a18, 0.78);
-    graphics.lineBetween(origin.x, origin.y, impactPoint.x, impactPoint.y);
-    graphics.lineStyle(3, 0xfff0a0, 0.98);
-    graphics.lineBetween(origin.x, origin.y, impactPoint.x, impactPoint.y);
+    // A compact fire bolt with a bright core and tapered fiery trail.
+    const trailLength = Math.min(58, distance * 0.48);
+    const tailX = impactPoint.x - direction.x * trailLength;
+    const tailY = impactPoint.y - direction.y * trailLength;
+    graphics.lineStyle(11, 0xff3b08, 0.32);
+    graphics.lineBetween(tailX, tailY, impactPoint.x, impactPoint.y);
+    graphics.lineStyle(6, 0xff8b16, 0.78);
+    graphics.lineBetween(tailX, tailY, impactPoint.x, impactPoint.y);
+    graphics.lineStyle(2, 0xfff2a0, 0.95);
+    graphics.lineBetween(tailX, tailY, impactPoint.x, impactPoint.y);
 
-    const segments = Math.max(9, Math.floor(distance / 12));
-    for (let i = 1; i <= segments; i += 1) {
-      const t = i / segments;
-      const centerX = Phaser.Math.Linear(origin.x, impactPoint.x, t);
-      const centerY = Phaser.Math.Linear(origin.y, impactPoint.y, t);
-      const wave = Math.sin(i * 1.65) * (4 + t * 9);
-      const jitter = Phaser.Math.Between(-3, 3);
-      const x = centerX + normal.x * (wave + jitter);
-      const y = centerY + normal.y * (wave + jitter);
-      const radius = 3 + t * 7;
-
-      graphics.fillStyle(i % 3 === 0 ? 0xfff2a1 : i % 2 === 0 ? 0xff9a1f : 0xff4b0a, 0.9);
-      graphics.fillCircle(x, y, radius);
-
-      // Small sparks peel off the main flame stream.
-      if (i % 2 === 0) {
-        const sparkOffset = Phaser.Math.Between(-18, 18);
-        graphics.fillStyle(0xffc23d, 0.85);
-        graphics.fillCircle(
-          centerX + normal.x * sparkOffset,
-          centerY + normal.y * sparkOffset,
-          Phaser.Math.Between(1, 3),
-        );
-      }
+    // Sparks along the flight path make the bolt read as moving fire, not a laser.
+    for (let i = 1; i <= 8; i += 1) {
+      const t = i / 9;
+      const px = Phaser.Math.Linear(origin.x, impactPoint.x, t);
+      const py = Phaser.Math.Linear(origin.y, impactPoint.y, t);
+      const offset = Phaser.Math.Between(-7, 7);
+      graphics.fillStyle(i % 2 === 0 ? 0xffc23d : 0xff5a0a, 0.82);
+      graphics.fillCircle(px + normal.x * offset, py + normal.y * offset, Phaser.Math.Between(1, 3));
     }
 
-    // Flare at the end without turning the spell into a fireball.
-    graphics.fillStyle(0xff6a0a, 0.62);
+    // Focused flaming projectile at the cursor-facing end.
+    graphics.fillStyle(0xff3b08, 0.78);
     graphics.fillCircle(impactPoint.x, impactPoint.y, 16);
-    graphics.fillStyle(0xfff2a1, 0.88);
-    graphics.fillCircle(impactPoint.x, impactPoint.y, 7);
+    graphics.fillStyle(0xff8b16, 1);
+    graphics.fillCircle(impactPoint.x, impactPoint.y, 11);
+    graphics.fillStyle(0xfff5b0, 1);
+    graphics.fillCircle(impactPoint.x, impactPoint.y, 6);
 
-    this.fadeEffect(graphics, 260);
+    this.fadeEffect(graphics, 300);
   }
 
   drawWaterEffect(origin, impactPoint, color) {
