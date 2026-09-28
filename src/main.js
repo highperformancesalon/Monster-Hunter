@@ -41,8 +41,8 @@ class HealthBar {
     this.height = height;
     this.yOffset = yOffset;
     this.fillColor = fillColor;
-    this.back = scene.add.rectangle(0, 0, width, this.height, COLORS.healthBack);
-    this.fill = scene.add.rectangle(0, 0, width, this.height, this.fillColor);
+    this.back = scene.add.rectangle(0, 0, width, this.height, 0x172019, 0.95);
+    this.fill = scene.add.rectangle(0, 0, width, this.height, this.fillColor, 1);
     this.back.setOrigin(0.5);
     this.fill.setOrigin(0, 0.5);
     this.back.setDepth(20);
@@ -53,7 +53,7 @@ class HealthBar {
     const ratio = Phaser.Math.Clamp(this.owner.health / this.owner.maxHealth, 0, 1);
     this.back.setPosition(this.owner.x, this.owner.y + this.yOffset);
     this.fill.setPosition(this.owner.x - this.width / 2, this.owner.y + this.yOffset);
-    this.fill.displayWidth = this.width * ratio;
+    this.fill.setDisplaySize(Math.max(0.01, this.width * ratio), this.height);
     this.fill.fillColor = ratio > 0.35 ? this.fillColor : COLORS.healthLow;
     this.setVisible(this.owner.active);
   }
@@ -419,8 +419,7 @@ class Monster {
     this.sprite.owner = this;
     this.sprite.play("thornshell-walk");
     this.healthBar = new HealthBar(scene, this.sprite, 92, -105, 0x39ff14, 12);
-    this.healthBar.back.setStrokeStyle(2, 0xffffff, 0.95);
-    this.healthBar.fill.setStrokeStyle(1, 0xffffff, 0.55);
+    this.healthBar.back.setStrokeStyle(2, 0x08120a, 1);
   }
 
   update(time, base, player) {
