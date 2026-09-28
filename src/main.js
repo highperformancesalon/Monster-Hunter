@@ -34,11 +34,11 @@ const ABILITIES = [
 ];
 
 class HealthBar {
-  constructor(scene, owner, width, yOffset, fillColor = COLORS.healthGood) {
+  constructor(scene, owner, width, yOffset, fillColor = COLORS.healthGood, height = 6) {
     this.scene = scene;
     this.owner = owner;
     this.width = width;
-    this.height = 6;
+    this.height = height;
     this.yOffset = yOffset;
     this.fillColor = fillColor;
     this.back = scene.add.rectangle(0, 0, width, this.height, COLORS.healthBack);
@@ -418,7 +418,7 @@ class Monster {
     this.sprite.body.setOffset(42, 48);
     this.sprite.owner = this;
     this.sprite.play("thornshell-walk");
-    this.healthBar = new HealthBar(scene, this.sprite, 56, -44);
+    this.healthBar = new HealthBar(scene, this.sprite, 76, -82, 0x63ff72, 10);
   }
 
   update(time, base, player) {
@@ -458,6 +458,7 @@ class Monster {
     }
 
     this.health = Math.max(0, this.health - amount);
+    this.healthBar.update();
     if (this.health <= 0) {
       this.startDeath();
     }
