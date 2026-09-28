@@ -42,7 +42,7 @@ class HealthBar {
     this.yOffset = yOffset;
     this.fillColor = fillColor;
     this.graphics = scene.add.graphics();
-    this.graphics.setDepth(150);
+    this.graphics.setDepth(1000);
   }
 
   update() {
@@ -92,6 +92,7 @@ class Base {
     this.sprite.body.setCircle(68, 58, 92);
     this.sprite.owner = this;
     this.healthBar = new HealthBar(scene, this.sprite, 150, -152);
+    this.healthBar.graphics.setDepth(150);
   }
 
   get x() {
@@ -134,6 +135,7 @@ class Player {
     this.sprite.setDepth(35);
     this.sprite.play("hunter-idle");
     this.healthBar = new HealthBar(scene, this.sprite, 58, -58, COLORS.playerHealth);
+    this.healthBar.graphics.setDepth(150);
 
     this.keys = scene.input.keyboard.addKeys({
       up: Phaser.Input.Keyboard.KeyCodes.W,
@@ -429,7 +431,7 @@ class Monster {
     this.sprite.body.setOffset(42, 48);
     this.sprite.owner = this;
     this.sprite.play("thornshell-walk");
-    this.healthBar = new HealthBar(scene, this.sprite, 92, -105, 0x39ff14, 12);
+    this.healthBar = new HealthBar(scene, this.sprite, 84, -38, 0x00ff3c, 11);
   }
 
   update(time, base, player) {
