@@ -88,6 +88,7 @@ class Base {
     this.sprite = scene.physics.add.staticSprite(x, y, "castleBase-clean");
     this.sprite.setOrigin(0.5, 0.68);
     this.sprite.setScale(1);
+    this.sprite.setPipeline("TextureTintPipeline");
     this.sprite.refreshBody();
     this.sprite.body.setCircle(68, 58, 92);
     this.sprite.owner = this;
@@ -175,6 +176,8 @@ class Player {
     }
 
     this.sprite.setVelocity(velocity.x, velocity.y);
+    this.shadow.setPosition(this.sprite.x, this.sprite.y + 24);
+    this.shadow.setDepth(30 + this.sprite.y / GAME_HEIGHT);
 
     if (Phaser.Input.Keyboard.JustDown(this.keys.attack)) {
       const pointer = this.scene.input.activePointer;
@@ -556,6 +559,7 @@ class Monster {
 
     this.sprite.play("thornshell-death");
     this.sprite.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+      this.shadow.destroy();
       this.sprite.destroy();
     });
   }
@@ -577,6 +581,7 @@ class Monster {
       duration: 430,
       ease: "Quad.easeIn",
       onComplete: () => {
+        this.shadow.destroy();
         this.sprite.destroy();
 
         // A low brown/gray ash pile remains briefly where the monster fell.
@@ -620,6 +625,7 @@ class Monster {
 
   destroy() {
     this.healthBar.destroy();
+    if (this.shadow) this.shadow.destroy();
     this.sprite.destroy();
   }
 }
@@ -1097,6 +1103,10 @@ class GameScene extends Phaser.Scene {
 
 const config = {
   type: Phaser.AUTO,
+  antialias: true,
+  antialiasGL: true,
+  roundPixels: false,
+  pixelArt: false,
   antialias: true,
   antialiasGL: true,
   roundPixels: false,
