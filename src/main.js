@@ -236,7 +236,7 @@ class Player {
 
       const distance = Phaser.Math.Distance.Between(impactPoint.x, impactPoint.y, monsterSprite.x, monsterSprite.y);
       if (distance <= ability.radius) {
-        monsterSprite.owner.takeDamage(ability.damage);
+        monsterSprite.owner.takeDamage(ability.damage, ability.key);
       }
     });
   }
@@ -446,6 +446,7 @@ class Monster {
     this.lastBaseAttackAt = 0;
     this.lastPlayerAttackAt = 0;
     this.isDying = false;
+    this.lastDamageType = null;
 
     this.sprite = scene.physics.add.sprite(x, y, "thornshell-walk-0-clean");
     this.sprite.setOrigin(0.5, 0.64);
@@ -488,15 +489,16 @@ class Monster {
     this.healthBar.update();
   }
 
-  takeDamage(amount) {
+  takeDamage(amount, damageType = null) {
     if (this.isDying) {
       return;
     }
 
+    this.lastDamageType = damageType;
     this.health = Math.max(0, this.health - amount);
     this.healthBar.update();
     if (this.health <= 0) {
-      this.startDeath();
+      this.startDeath(damageType);
     }
   }
 
@@ -520,14 +522,78 @@ class Monster {
     });
   }
 
-  startDeath() {
+  startDeath(damageType = this.lastDamageType) {
     this.isDying = true;
     this.sprite.setVelocity(0, 0);
     this.sprite.disableBody(true, false);
     this.healthBar.destroy();
+
+    if (damageType === "fire") {
+      this.playFireDustDeath();
+      return;
+    }
+
     this.sprite.play("thornshell-death");
     this.sprite.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
       this.sprite.destroy();
+    });
+  }
+
+  playFireDustDeath() {
+    const deathX = this.sprite.x;
+    const deathY = this.sprite.y;
+    const dust = this.scene.add.graphics().setDepth(45);
+
+    // Thornshell chars/shrivels inward before collapsing.
+    this.sprite.setTint(0x4b2d20);
+    this.scene.tweens.add({
+      targets: this.sprite,
+      scaleX: this.sprite.scaleX * 0.48,
+      scaleY: this.sprite.scaleY * 0.32,
+      y: deathY + 20,
+      alpha: 0.38,
+      angle: Phaser.Math.Between(-7, 7),
+      duration: 430,
+      ease: "Quad.easeIn",
+      onComplete: () => {
+        this.sprite.destroy();
+
+        // A low brown/gray ash pile remains briefly where the monster fell.
+        dust.fillStyle(0x3a3029, 0.9);
+        dust.fillEllipse(deathX, deathY + 28, 58, 18);
+        dust.fillStyle(0x6b5748, 0.8);
+        dust.fillEllipse(deathX - 8, deathY + 24, 32, 12);
+        dust.fillStyle(0x8a7562, 0.55);
+        dust.fillEllipse(deathX + 12, deathY + 25, 24, 9);
+
+        // Ash motes puff upward as the body turns to dust.
+        for (let i = 0; i < 14; i += 1) {
+          const mote = this.scene.add.circle(
+            deathX + Phaser.Math.Between(-25, 25),
+            deathY + Phaser.Math.Between(8, 30),
+            Phaser.Math.Between(2, 5),
+            i % 2 === 0 ? 0x6b5748 : 0x3a3029,
+            0.72,
+          ).setDepth(46);
+          this.scene.tweens.add({
+            targets: mote,
+            y: mote.y - Phaser.Math.Between(18, 46),
+            x: mote.x + Phaser.Math.Between(-12, 12),
+            alpha: 0,
+            scale: 0.35,
+            duration: Phaser.Math.Between(650, 1050),
+            onComplete: () => mote.destroy(),
+          });
+        }
+
+        this.scene.tweens.add({
+          targets: dust,
+          alpha: 0,
+          duration: 2200,
+          delay: 1500,
+          onComplete: () => dust.destroy(),
+        });
+      },
     });
   }
 
