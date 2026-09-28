@@ -431,7 +431,7 @@ class Monster {
     this.sprite.body.setOffset(42, 48);
     this.sprite.owner = this;
     this.sprite.play("thornshell-walk");
-    this.healthBar = new HealthBar(scene, this.sprite, 84, -38, 0x00ff3c, 11);
+    this.healthBar = new MonsterHealthBar(scene, this);
   }
 
   update(time, base, player) {
@@ -513,6 +513,50 @@ class Monster {
     this.sprite.destroy();
   }
 }
+class MonsterHealthBar {
+  constructor(scene, monster) {
+    this.scene = scene;
+    this.monster = monster;
+    this.width = 72;
+    this.height = 9;
+    this.graphics = scene.add.graphics().setDepth(10000);
+  }
+
+  update() {
+    const sprite = this.monster.sprite;
+    if (!sprite.active || this.monster.isDying) {
+      this.graphics.setVisible(false);
+      return;
+    }
+
+    const ratio = Phaser.Math.Clamp(this.monster.health / this.monster.maxHealth, 0, 1);
+    // Thornshell's source images contain transparent padding. Anchor the bar to the
+    // visible/physics body instead of the full image canvas.
+    const bodyTop = sprite.body ? sprite.body.y : sprite.y - 20;
+    const x = sprite.x - this.width / 2;
+    const y = bodyTop - 16;
+    const fillWidth = this.width * ratio;
+    const color = ratio > 0.35 ? 0x20ff45 : 0xff334f;
+
+    this.graphics.clear();
+    this.graphics.setVisible(true);
+    this.graphics.fillStyle(0x000000, 0.92);
+    this.graphics.fillRoundedRect(x - 3, y - 3, this.width + 6, this.height + 6, 4);
+    this.graphics.fillStyle(0x263029, 1);
+    this.graphics.fillRect(x, y, this.width, this.height);
+    if (fillWidth > 0) {
+      this.graphics.fillStyle(color, 1);
+      this.graphics.fillRect(x, y, fillWidth, this.height);
+    }
+    this.graphics.lineStyle(2, 0xffffff, 1);
+    this.graphics.strokeRoundedRect(x - 3, y - 3, this.width + 6, this.height + 6, 4);
+  }
+
+  destroy() {
+    this.graphics.destroy();
+  }
+}
+
 
 class WaveSpawner {
   constructor(scene, monsterGroup) {
