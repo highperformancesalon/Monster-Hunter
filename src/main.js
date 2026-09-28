@@ -86,11 +86,11 @@ class Base {
     this.maxHealth = 250;
     this.health = this.maxHealth;
     this.sprite = scene.physics.add.staticSprite(x, y, "castleBase-clean");
-    this.sprite.setOrigin(0.5, 0.68);
+    this.sprite.setOrigin(0.5, 0.86);
     this.sprite.setScale(1);
     this.sprite.setPipeline("TextureTintPipeline");
     this.sprite.refreshBody();
-    this.sprite.body.setCircle(68, 58, 92);
+    this.sprite.body.setCircle(68, 58, 102);
     this.sprite.owner = this;
     this.shadow = scene.add.ellipse(x, y + 48, 170, 54, 0x000000, 0.28).setDepth(8);
     this.healthBar = new HealthBar(scene, this.sprite, 150, -152);
@@ -129,11 +129,11 @@ class Player {
     this.lastAttackAt = -Infinity;
 
     this.sprite = scene.physics.add.sprite(x, y, "hunter-idle-0-clean");
-    this.sprite.setOrigin(0.5, 0.72);
+    this.sprite.setOrigin(0.5, 0.9);
     this.sprite.setScale(0.85);
     this.sprite.setCollideWorldBounds(true);
     this.sprite.body.setSize(30, 34);
-    this.sprite.body.setOffset(20, 58);
+    this.sprite.body.setOffset(20, 64);
     this.sprite.owner = this;
     this.sprite.setDepth(35);
     this.sprite.setPipeline("TextureTintPipeline");
@@ -465,10 +465,10 @@ class Monster {
     this.lastDamageType = null;
 
     this.sprite = scene.physics.add.sprite(x, y, "thornshell-walk-0-clean");
-    this.sprite.setOrigin(0.5, 0.64);
+    this.sprite.setOrigin(0.5, 0.82);
     this.sprite.setScale(0.82);
     this.sprite.body.setSize(46, 28);
-    this.sprite.body.setOffset(42, 48);
+    this.sprite.body.setOffset(42, 56);
     this.sprite.owner = this;
     this.shadow = scene.add.ellipse(x, y + 18, 78, 25, 0x000000, 0.34).setDepth(8);
     this.sprite.play("thornshell-walk");
