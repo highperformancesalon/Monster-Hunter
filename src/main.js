@@ -176,8 +176,6 @@ class Player {
     }
 
     this.sprite.setVelocity(velocity.x, velocity.y);
-    this.shadow.setPosition(this.sprite.x, this.sprite.y + 24);
-    this.shadow.setDepth(30 + this.sprite.y / GAME_HEIGHT);
 
     if (Phaser.Input.Keyboard.JustDown(this.keys.attack)) {
       const pointer = this.scene.input.activePointer;
@@ -559,7 +557,6 @@ class Monster {
 
     this.sprite.play("thornshell-death");
     this.sprite.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
-      this.shadow.destroy();
       this.sprite.destroy();
     });
   }
@@ -581,7 +578,6 @@ class Monster {
       duration: 430,
       ease: "Quad.easeIn",
       onComplete: () => {
-        this.shadow.destroy();
         this.sprite.destroy();
 
         // A low brown/gray ash pile remains briefly where the monster fell.
@@ -625,7 +621,6 @@ class Monster {
 
   destroy() {
     this.healthBar.destroy();
-    if (this.shadow) this.shadow.destroy();
     this.sprite.destroy();
   }
 }
