@@ -959,20 +959,27 @@ class GameScene extends Phaser.Scene {
         const iconX = x + 14;
         const iconY = y;
 
-        // Smooth layered Fire Bolt icon with curved flame tongues and a glowing core.
-        icon.fillStyle(0xb91f08, 0.45);
-        icon.fillEllipse(iconX - 9, iconY, 38, 25);
-        icon.fillStyle(0xff3d0a, 0.9);
-        icon.fillTriangle(iconX - 29, iconY + 1, iconX - 8, iconY - 12, iconX - 5, iconY + 5);
-        icon.fillTriangle(iconX - 23, iconY + 8, iconX - 4, iconY - 2, iconX - 8, iconY + 13);
-        icon.fillStyle(0xff7a0a, 1);
-        icon.fillEllipse(iconX - 1, iconY, 25, 23);
-        icon.fillStyle(0xffb21a, 1);
-        icon.fillEllipse(iconX + 2, iconY - 1, 18, 17);
-        icon.fillStyle(0xfff0a0, 1);
-        icon.fillEllipse(iconX + 5, iconY - 2, 9, 9);
-        icon.lineStyle(1.5, 0xffd35a, 0.8);
-        icon.strokeCircle(iconX + 1, iconY, 11);
+        // Red animated-looking flame icon: irregular flame silhouette, hot core, and trailing tongues.
+        icon.fillStyle(0x6f0710, 0.9);
+        icon.fillTriangle(iconX - 31, iconY + 2, iconX - 10, iconY - 14, iconX - 8, iconY + 5);
+        icon.fillTriangle(iconX - 26, iconY + 10, iconX - 7, iconY - 3, iconX - 9, iconY + 14);
+        icon.fillStyle(0xb80f17, 1);
+        icon.fillTriangle(iconX - 18, iconY - 1, iconX - 3, iconY - 17, iconX + 1, iconY + 3);
+        icon.fillTriangle(iconX - 15, iconY + 8, iconX + 2, iconY - 2, iconX - 1, iconY + 15);
+        icon.fillEllipse(iconX, iconY, 27, 25);
+        icon.fillStyle(0xf12a16, 1);
+        icon.fillTriangle(iconX - 5, iconY - 6, iconX + 4, iconY - 19, iconX + 8, iconY + 1);
+        icon.fillEllipse(iconX + 3, iconY + 1, 19, 18);
+        icon.fillStyle(0xff711c, 1);
+        icon.fillEllipse(iconX + 5, iconY + 2, 11, 11);
+        icon.fillStyle(0xffd35a, 0.95);
+        icon.fillEllipse(iconX + 7, iconY + 3, 5, 6);
+
+        // Tiny red embers make the icon feel active even at hotbar scale.
+        icon.fillStyle(0xff2a18, 0.95);
+        icon.fillCircle(iconX - 24, iconY - 10, 2);
+        icon.fillCircle(iconX - 19, iconY + 13, 1.7);
+        icon.fillCircle(iconX - 11, iconY - 15, 1.5);
       }
 
       const label = this.add.text(ability.key === "fire" ? x - 28 : x + 6, y, ability.label, {
