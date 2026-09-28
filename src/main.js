@@ -958,13 +958,21 @@ class GameScene extends Phaser.Scene {
         const icon = this.add.graphics().setDepth(122);
         const iconX = x + 14;
         const iconY = y;
-        // Small Fire Bolt icon: bright core, orange flame body, tapered tail.
-        icon.fillStyle(0xff3b08, 0.95);
-        icon.fillTriangle(iconX - 24, iconY, iconX - 8, iconY - 9, iconX - 8, iconY + 9);
-        icon.fillStyle(0xff8b16, 1);
-        icon.fillCircle(iconX, iconY, 11);
-        icon.fillStyle(0xfff3a0, 1);
-        icon.fillCircle(iconX + 2, iconY - 1, 5);
+
+        // Smooth layered Fire Bolt icon with curved flame tongues and a glowing core.
+        icon.fillStyle(0xb91f08, 0.45);
+        icon.fillEllipse(iconX - 9, iconY, 38, 25);
+        icon.fillStyle(0xff3d0a, 0.9);
+        icon.fillTriangle(iconX - 29, iconY + 1, iconX - 8, iconY - 12, iconX - 5, iconY + 5);
+        icon.fillTriangle(iconX - 23, iconY + 8, iconX - 4, iconY - 2, iconX - 8, iconY + 13);
+        icon.fillStyle(0xff7a0a, 1);
+        icon.fillEllipse(iconX - 1, iconY, 25, 23);
+        icon.fillStyle(0xffb21a, 1);
+        icon.fillEllipse(iconX + 2, iconY - 1, 18, 17);
+        icon.fillStyle(0xfff0a0, 1);
+        icon.fillEllipse(iconX + 5, iconY - 2, 9, 9);
+        icon.lineStyle(1.5, 0xffd35a, 0.8);
+        icon.strokeCircle(iconX + 1, iconY, 11);
       }
 
       const label = this.add.text(ability.key === "fire" ? x - 28 : x + 6, y, ability.label, {
