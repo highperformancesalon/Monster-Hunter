@@ -418,7 +418,9 @@ class Monster {
     this.sprite.body.setOffset(42, 48);
     this.sprite.owner = this;
     this.sprite.play("thornshell-walk");
-    this.healthBar = new HealthBar(scene, this.sprite, 76, -82, 0x63ff72, 10);
+    this.healthBar = new HealthBar(scene, this.sprite, 92, -105, 0x39ff14, 12);
+    this.healthBar.back.setStrokeStyle(2, 0xffffff, 0.95);
+    this.healthBar.fill.setStrokeStyle(1, 0xffffff, 0.55);
   }
 
   update(time, base, player) {
