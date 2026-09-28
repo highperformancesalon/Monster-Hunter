@@ -25,7 +25,7 @@ const HUNTER_ANIMATION_FRAMES = {
 };
 
 const ABILITIES = [
-  { key: "fire", label: "1 Fire", color: 0xff6b1a, damage: 42, radius: 62, range: 150 },
+  { key: "fire", label: "1", color: 0xff6b1a, damage: 42, radius: 62, range: 150 },
   { key: "grass", label: "2 Grass", color: 0x76d64f, damage: 30, radius: 78, range: 135 },
   { key: "water", label: "3 Water", color: 0x4cb8ff, damage: 34, radius: 66, range: 155 },
   { key: "ice", label: "4 Ice", color: 0x9ee7ff, damage: 28, radius: 70, range: 145 },
@@ -953,7 +953,21 @@ class GameScene extends Phaser.Scene {
       const swatch = this.add.circle(x - buttonWidth / 2 + 18, y, 7, ability.color, 1);
       swatch.setDepth(121);
 
-      const label = this.add.text(x + 6, y, ability.label, {
+      if (ability.key === "fire") {
+        swatch.setVisible(false);
+        const icon = this.add.graphics().setDepth(122);
+        const iconX = x + 14;
+        const iconY = y;
+        // Small Fire Bolt icon: bright core, orange flame body, tapered tail.
+        icon.fillStyle(0xff3b08, 0.95);
+        icon.fillTriangle(iconX - 24, iconY, iconX - 8, iconY - 9, iconX - 8, iconY + 9);
+        icon.fillStyle(0xff8b16, 1);
+        icon.fillCircle(iconX, iconY, 11);
+        icon.fillStyle(0xfff3a0, 1);
+        icon.fillCircle(iconX + 2, iconY - 1, 5);
+      }
+
+      const label = this.add.text(ability.key === "fire" ? x - 28 : x + 6, y, ability.label, {
         color: COLORS.text,
         fontFamily: "Inter, Arial, sans-serif",
         fontSize: "14px",
