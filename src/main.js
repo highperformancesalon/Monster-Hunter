@@ -284,67 +284,51 @@ class Player {
     direction.normalize();
     const normal = new Phaser.Math.Vector2(-direction.y, direction.x);
 
-    // Hand ignition: the bolt visibly forms in the hunter's palm.
-    graphics.fillStyle(0x7a0710, 0.72);
-    graphics.fillCircle(origin.x, origin.y, 10);
-    graphics.fillStyle(0xe32116, 0.95);
-    graphics.fillCircle(origin.x + direction.x * 5, origin.y + direction.y * 5, 7);
-    graphics.fillStyle(0xffb32f, 1);
-    graphics.fillCircle(origin.x + direction.x * 7, origin.y + direction.y * 7, 3);
+    // A narrow fiery streak from the hunter's hand to the projectile.
+    const ballRadius = 15;
+    const lineEndX = impactPoint.x - direction.x * (ballRadius - 1);
+    const lineEndY = impactPoint.y - direction.y * (ballRadius - 1);
+    graphics.lineStyle(7, 0x8b0b12, 0.42);
+    graphics.lineBetween(origin.x, origin.y, lineEndX, lineEndY);
+    graphics.lineStyle(4, 0xe52a16, 0.88);
+    graphics.lineBetween(origin.x, origin.y, lineEndX, lineEndY);
+    graphics.lineStyle(1.5, 0xff9b25, 0.95);
+    graphics.lineBetween(origin.x, origin.y, lineEndX, lineEndY);
 
-    // Red comet-like trail leading to the fireball.
-    const tailLength = Math.min(66, distance * 0.52);
-    for (let i = 7; i >= 1; i -= 1) {
-      const t = i / 8;
-      const px = impactPoint.x - direction.x * tailLength * t;
-      const py = impactPoint.y - direction.y * tailLength * t;
-      const wobble = Math.sin(i * 1.7) * (3 + i * 0.7);
-      const size = 2 + (8 - i) * 0.75;
-      graphics.fillStyle(i > 4 ? 0x7d0710 : 0xd91d16, 0.38 + (8 - i) * 0.07);
-      graphics.fillCircle(px + normal.x * wobble, py + normal.y * wobble, size);
+    // A few sparks make the thin line feel like moving fire.
+    for (let i = 1; i <= 6; i += 1) {
+      const t = i / 7;
+      const px = Phaser.Math.Linear(origin.x, lineEndX, t);
+      const py = Phaser.Math.Linear(origin.y, lineEndY, t);
+      const offset = Phaser.Math.Between(-5, 5);
+      graphics.fillStyle(i % 2 === 0 ? 0xff3b18 : 0xff8a20, 0.82);
+      graphics.fillCircle(px + normal.x * offset, py + normal.y * offset, Phaser.Math.FloatBetween(1, 2.2));
     }
 
-    // Flame tongues wrapped around the projectile, matching the selected concept art.
+    // Red fireball at the front of the streak.
     const bx = impactPoint.x;
     const by = impactPoint.y;
-    const backX = bx - direction.x * 13;
-    const backY = by - direction.y * 13;
-    graphics.fillStyle(0x71060d, 0.98);
+    graphics.fillStyle(0x74070d, 0.98);
     graphics.fillTriangle(
-      backX - direction.x * 28 + normal.x * 2, backY - direction.y * 28 + normal.y * 2,
-      backX + normal.x * 12, backY + normal.y * 12,
-      bx - normal.x * 5, by - normal.y * 5,
+      bx - direction.x * 27 + normal.x * 2, by - direction.y * 27 + normal.y * 2,
+      bx - direction.x * 8 + normal.x * 10, by - direction.y * 8 + normal.y * 10,
+      bx - direction.x * 2 - normal.x * 4, by - direction.y * 2 - normal.y * 4,
     );
     graphics.fillTriangle(
-      backX - direction.x * 22 - normal.x * 4, backY - direction.y * 22 - normal.y * 4,
-      backX - normal.x * 13, backY - normal.y * 13,
-      bx + normal.x * 4, by + normal.y * 4,
+      bx - direction.x * 22 - normal.x * 3, by - direction.y * 22 - normal.y * 3,
+      bx - direction.x * 7 - normal.x * 11, by - direction.y * 7 - normal.y * 11,
+      bx - direction.x * 1 + normal.x * 4, by - direction.y * 1 + normal.y * 4,
     );
     graphics.fillStyle(0xb80f17, 1);
-    graphics.fillCircle(bx, by, 18);
-    graphics.fillTriangle(
-      bx - direction.x * 18 + normal.x * 3, by - direction.y * 18 + normal.y * 3,
-      bx + normal.x * 12, by + normal.y * 12,
-      bx + direction.x * 7, by + direction.y * 7,
-    );
-    graphics.fillStyle(0xf02a16, 1);
-    graphics.fillCircle(bx + direction.x * 3, by + direction.y * 3, 13);
-    graphics.fillStyle(0xff7b1b, 1);
-    graphics.fillCircle(bx + direction.x * 5, by + direction.y * 5, 8);
-    graphics.fillStyle(0xffd45b, 1);
-    graphics.fillCircle(bx + direction.x * 7, by + direction.y * 7, 3.5);
+    graphics.fillCircle(bx, by, ballRadius);
+    graphics.fillStyle(0xef2c17, 1);
+    graphics.fillCircle(bx + direction.x * 3, by + direction.y * 3, 10);
+    graphics.fillStyle(0xff771b, 1);
+    graphics.fillCircle(bx + direction.x * 5, by + direction.y * 5, 6);
+    graphics.fillStyle(0xffd35a, 1);
+    graphics.fillCircle(bx + direction.x * 7, by + direction.y * 7, 2.8);
 
-    // Flying embers around the bolt.
-    for (let i = 0; i < 7; i += 1) {
-      const t = Phaser.Math.FloatBetween(0.25, 0.95);
-      const px = Phaser.Math.Linear(origin.x, bx, t);
-      const py = Phaser.Math.Linear(origin.y, by, t);
-      const spread = Phaser.Math.Between(-14, 14);
-      graphics.fillStyle(i % 3 === 0 ? 0xff7b1b : 0xe32116, 0.88);
-      graphics.fillCircle(px + normal.x * spread, py + normal.y * spread, Phaser.Math.FloatBetween(1.2, 2.8));
-    }
-
-    this.fadeEffect(graphics, 340);
+    this.fadeEffect(graphics, 300);
   }
 
   drawWaterEffect(origin, impactPoint, color) {
