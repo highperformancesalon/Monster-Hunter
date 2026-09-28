@@ -41,31 +41,42 @@ class HealthBar {
     this.height = height;
     this.yOffset = yOffset;
     this.fillColor = fillColor;
-    this.back = scene.add.rectangle(0, 0, width, this.height, 0x172019, 0.95);
-    this.fill = scene.add.rectangle(0, 0, width, this.height, this.fillColor, 1);
-    this.back.setOrigin(0.5);
-    this.fill.setOrigin(0, 0.5);
-    this.back.setDepth(20);
-    this.fill.setDepth(21);
+    this.graphics = scene.add.graphics();
+    this.graphics.setDepth(150);
   }
 
   update() {
     const ratio = Phaser.Math.Clamp(this.owner.health / this.owner.maxHealth, 0, 1);
-    this.back.setPosition(this.owner.x, this.owner.y + this.yOffset);
-    this.fill.setPosition(this.owner.x - this.width / 2, this.owner.y + this.yOffset);
-    this.fill.setDisplaySize(Math.max(0.01, this.width * ratio), this.height);
-    this.fill.fillColor = ratio > 0.35 ? this.fillColor : COLORS.healthLow;
-    this.setVisible(this.owner.active);
+    const x = this.owner.x - this.width / 2;
+    const y = this.owner.y + this.yOffset - this.height / 2;
+    const fillWidth = this.width * ratio;
+    const currentColor = ratio > 0.35 ? this.fillColor : COLORS.healthLow;
+
+    this.graphics.clear();
+    if (!this.owner.active) {
+      this.graphics.setVisible(false);
+      return;
+    }
+
+    this.graphics.setVisible(true);
+    this.graphics.fillStyle(0x071009, 0.95);
+    this.graphics.fillRoundedRect(x - 3, y - 3, this.width + 6, this.height + 6, 5);
+    this.graphics.fillStyle(0x1d2a20, 1);
+    this.graphics.fillRect(x, y, this.width, this.height);
+    if (fillWidth > 0) {
+      this.graphics.fillStyle(currentColor, 1);
+      this.graphics.fillRect(x, y, fillWidth, this.height);
+    }
+    this.graphics.lineStyle(2, 0xffffff, 0.95);
+    this.graphics.strokeRoundedRect(x - 3, y - 3, this.width + 6, this.height + 6, 5);
   }
 
   setVisible(isVisible) {
-    this.back.setVisible(isVisible);
-    this.fill.setVisible(isVisible);
+    this.graphics.setVisible(isVisible);
   }
 
   destroy() {
-    this.back.destroy();
-    this.fill.destroy();
+    this.graphics.destroy();
   }
 }
 
@@ -419,7 +430,6 @@ class Monster {
     this.sprite.owner = this;
     this.sprite.play("thornshell-walk");
     this.healthBar = new HealthBar(scene, this.sprite, 92, -105, 0x39ff14, 12);
-    this.healthBar.back.setStrokeStyle(2, 0x08120a, 1);
   }
 
   update(time, base, player) {
