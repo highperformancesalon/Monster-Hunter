@@ -173,7 +173,8 @@ class Player {
     this.sprite.setVelocity(velocity.x, velocity.y);
 
     if (Phaser.Input.Keyboard.JustDown(this.keys.attack)) {
-      this.attack(time, monsters);
+      const pointer = this.scene.input.activePointer;
+      this.attack(time, monsters, { x: pointer.worldX, y: pointer.worldY });
     }
 
     this.updateAbilitySelection();
@@ -251,10 +252,13 @@ class Player {
 
     const target = new Phaser.Math.Vector2(targetPoint.x, targetPoint.y);
     const direction = target.subtract(origin);
-    if (direction.lengthSq() === 0) {
+    const distance = direction.length();
+    if (distance === 0) {
       direction.set(this.sprite.flipX ? -1 : 1, 0);
+    } else {
+      direction.normalize();
     }
-    direction.normalize().scale(Math.min(ability.range, direction.length()));
+    direction.scale(Math.min(ability.range, Math.max(distance, 1)));
     return { x: origin.x + direction.x, y: origin.y + direction.y };
   }
 
