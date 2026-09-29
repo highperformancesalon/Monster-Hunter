@@ -127,6 +127,8 @@ class Player {
     this.lastAttackAt = -Infinity;
     this.fireMode = "bolt";
     this.hasFlameStream = false;
+    this.grassMode = "basic";
+    this.hasEntanglingVines = false;
 
     this.sprite = scene.physics.add.sprite(x, y, "hunter-idle-0-clean");
     this.sprite.setOrigin(0.5, 0.72);
@@ -283,7 +285,11 @@ class Player {
     } else if (ability.key === "water") {
       this.drawWaterEffect(origin, impactPoint, ability.color);
     } else if (ability.key === "grass") {
-      this.drawGrassEffect(origin, impactPoint, ability.color);
+      if (this.grassMode === "vines") {
+        this.drawEntanglingVinesEffect(origin, impactPoint, ability.color);
+      } else {
+        this.drawGrassEffect(origin, impactPoint, ability.color);
+      }
     } else if (ability.key === "ice") {
       this.drawIceEffect(origin, impactPoint, ability.color);
     } else if (ability.key === "bomb") {
@@ -482,6 +488,54 @@ class Player {
       graphics.fillEllipse(x, y, 12, 5);
     }
     this.fadeEffect(graphics, 520);
+  }
+
+  drawEntanglingVinesEffect(origin, impactPoint, color) {
+    const graphics = this.scene.add.graphics().setDepth(93);
+    const direction = new Phaser.Math.Vector2(impactPoint.x - origin.x, impactPoint.y - origin.y);
+    const distance = Math.max(direction.length(), 1);
+    direction.normalize();
+    const normal = new Phaser.Math.Vector2(-direction.y, direction.x);
+
+    // Several living vines snake from the hunter toward the target.
+    for (let vine = 0; vine < 4; vine += 1) {
+      const side = (vine - 1.5) * 6;
+      graphics.lineStyle(5 - vine * 0.55, vine % 2 === 0 ? 0x3f8f24 : 0x75c93d, 0.95);
+      graphics.beginPath();
+      graphics.moveTo(origin.x, origin.y);
+      const steps = 9;
+      for (let i = 1; i <= steps; i += 1) {
+        const t = i / steps;
+        const sway = Math.sin(t * Math.PI * 3 + vine * 1.35) * (7 + t * 8) + side;
+        const px = Phaser.Math.Linear(origin.x, impactPoint.x, t) + normal.x * sway;
+        const py = Phaser.Math.Linear(origin.y, impactPoint.y, t) + normal.y * sway;
+        graphics.lineTo(px, py);
+      }
+      graphics.strokePath();
+    }
+
+    // Curling coils around the impact point make the target look entangled.
+    for (let ring = 0; ring < 3; ring += 1) {
+      graphics.lineStyle(4 - ring * 0.6, ring === 0 ? 0x2e761e : 0x7dd84a, 0.9);
+      graphics.strokeEllipse(
+        impactPoint.x,
+        impactPoint.y - ring * 5,
+        54 - ring * 8,
+        28 + ring * 7,
+      );
+    }
+
+    // Leaves burst off the vines.
+    for (let i = 0; i < 13; i += 1) {
+      const t = Phaser.Math.FloatBetween(0.12, 1);
+      const px = Phaser.Math.Linear(origin.x, impactPoint.x, t);
+      const py = Phaser.Math.Linear(origin.y, impactPoint.y, t);
+      const spread = Phaser.Math.Between(-18, 18);
+      graphics.fillStyle(i % 2 === 0 ? 0x77d442 : 0x3b9228, 0.9);
+      graphics.fillEllipse(px + normal.x * spread, py + normal.y * spread, 7, 3);
+    }
+
+    this.fadeEffect(graphics, 420);
   }
 
   drawIceEffect(origin, impactPoint, color) {
@@ -858,6 +912,8 @@ class GameScene extends Phaser.Scene {
     this.isGameOver = false;
     this.fireBookDropped = false;
     this.fireBook = null;
+    this.plantBookDropped = false;
+    this.plantBook = null;
     this.createPlaceholderTextures();
     this.createTransparentTexture("castleBase", "castleBase-clean", "edgeLight");
     this.createHunterAnimations();
@@ -903,6 +959,7 @@ class GameScene extends Phaser.Scene {
     this.base.update();
     this.spawner.update(time);
     this.updateFireBookPickup();
+    this.updatePlantBookPickup();
 
     this.monsters.children.each((monsterSprite) => {
       monsterSprite.owner.update(time, this.base, this.player);
@@ -925,6 +982,8 @@ class GameScene extends Phaser.Scene {
       selectedAbilityIndex: this.player.selectedAbilityIndex,
       hasFlameStream: this.player.hasFlameStream,
       fireMode: this.player.fireMode,
+      hasEntanglingVines: this.player.hasEntanglingVines,
+      grassMode: this.player.grassMode,
     };
 
     try {
@@ -951,6 +1010,8 @@ class GameScene extends Phaser.Scene {
     this.player.selectedAbilityIndex = Phaser.Math.Clamp(Number(progress.selectedAbilityIndex) || 0, 0, ABILITIES.length - 1);
     this.player.hasFlameStream = Boolean(progress.hasFlameStream);
     this.player.fireMode = this.player.hasFlameStream && progress.fireMode === "stream" ? "stream" : "bolt";
+    this.player.hasEntanglingVines = Boolean(progress.hasEntanglingVines);
+    this.player.grassMode = this.player.hasEntanglingVines && progress.grassMode === "vines" ? "vines" : "basic";
 
     const savedWave = Math.max(0, Math.floor(Number(progress.waveNumber) || 0));
     // Resume at the beginning of the saved wave instead of trying to reconstruct
@@ -961,15 +1022,23 @@ class GameScene extends Phaser.Scene {
   }
 
   onMonsterDefeated(monster) {
-    if (this.fireBookDropped || this.spawner.waveNumber !== 5 || this.spawner.remainingToSpawn !== 0) {
+    if (this.spawner.remainingToSpawn !== 0) {
       return;
     }
 
     const otherLiving = this.monsters.getChildren().filter(
       (sprite) => sprite.active && sprite !== monster.sprite && sprite.owner && !sprite.owner.isDying && sprite.owner.health > 0,
     );
-    if (otherLiving.length === 0) {
+    if (otherLiving.length !== 0) {
+      return;
+    }
+
+    if (this.spawner.waveNumber === 5 && !this.fireBookDropped && !this.player.hasFlameStream) {
       this.dropFireBook(monster.sprite.x, monster.sprite.y);
+    }
+
+    if (this.spawner.waveNumber === 6 && !this.plantBookDropped && !this.player.hasEntanglingVines) {
+      this.dropPlantBook(monster.sprite.x, monster.sprite.y);
     }
   }
 
@@ -988,6 +1057,47 @@ class GameScene extends Phaser.Scene {
     this.tweens.add({ targets: glow, alpha: 0.48, scale: 1.18, yoyo: true, repeat: -1, duration: 520 });
     this.tweens.add({ targets: container, y: y - 6, yoyo: true, repeat: -1, duration: 700, ease: "Sine.easeInOut" });
     this.fireBook = container;
+  }
+
+  dropPlantBook(x, y) {
+    this.plantBookDropped = true;
+    const container = this.add.container(x, y).setDepth(500);
+    const glow = this.add.circle(0, 0, 27, 0x61c936, 0.24);
+    const cover = this.add.rectangle(0, 0, 30, 38, 0x245f24, 1).setStrokeStyle(2, 0x9be35e, 1);
+    const spine = this.add.rectangle(-11, 0, 4, 34, 0x143c18, 1);
+    const leaf = this.add.graphics();
+    leaf.fillStyle(0x8ee052, 1);
+    leaf.fillEllipse(1, -2, 12, 20);
+    leaf.lineStyle(2, 0x285f23, 1);
+    leaf.lineBetween(0, 8, 2, -10);
+    container.add([glow, cover, spine, leaf]);
+    this.tweens.add({ targets: glow, alpha: 0.5, scale: 1.18, yoyo: true, repeat: -1, duration: 520 });
+    this.tweens.add({ targets: container, y: y - 6, yoyo: true, repeat: -1, duration: 700, ease: "Sine.easeInOut" });
+    this.plantBook = container;
+  }
+
+  updatePlantBookPickup() {
+    if (!this.plantBook || !this.plantBook.active) {
+      return;
+    }
+    const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.plantBook.x, this.plantBook.y);
+    if (distance <= 48) {
+      this.unlockEntanglingVines();
+    }
+  }
+
+  unlockEntanglingVines() {
+    if (this.player.hasEntanglingVines) {
+      return;
+    }
+    this.player.hasEntanglingVines = true;
+    this.player.grassMode = "vines";
+    this.player.selectAbility(1);
+    this.plantBook.destroy();
+    this.plantBook = null;
+    this.updateHotbar();
+    this.showWaveBanner("Entangling Vines Unlocked!");
+    this.saveProgress();
   }
 
   updateFireBookPickup() {
