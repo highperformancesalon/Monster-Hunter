@@ -285,64 +285,56 @@ class Player {
     direction.normalize();
     const normal = new Phaser.Math.Vector2(-direction.y, direction.x);
 
-    // Thin fiery path from the hunter's hand.
-    const flameBaseX = impactPoint.x - direction.x * 8;
-    const flameBaseY = impactPoint.y - direction.y * 8;
-    graphics.lineStyle(5, 0x8f130b, 0.42);
-    graphics.lineBetween(origin.x, origin.y, flameBaseX, flameBaseY);
-    graphics.lineStyle(2.5, 0xff4a12, 0.9);
-    graphics.lineBetween(origin.x, origin.y, flameBaseX, flameBaseY);
+    // Small fiery line from the hunter's hand.
+    const ballRadius = 16;
+    const lineEndX = impactPoint.x - direction.x * (ballRadius - 2);
+    const lineEndY = impactPoint.y - direction.y * (ballRadius - 2);
+    graphics.lineStyle(6, 0x7a0a0a, 0.35);
+    graphics.lineBetween(origin.x, origin.y, lineEndX, lineEndY);
+    graphics.lineStyle(3.5, 0xe52a16, 0.88);
+    graphics.lineBetween(origin.x, origin.y, lineEndX, lineEndY);
+    graphics.lineStyle(1.5, 0xff9a28, 0.95);
+    graphics.lineBetween(origin.x, origin.y, lineEndX, lineEndY);
 
-    // The projectile itself is an irregular campfire-shaped flame, not a ball.
-    // Dark red outer flame tongues.
-    graphics.fillStyle(0x8b100b, 0.98);
-    graphics.fillTriangle(
-      impactPoint.x - normal.x * 15, impactPoint.y - normal.y * 15,
-      impactPoint.x + direction.x * 4, impactPoint.y + direction.y * 4,
-      impactPoint.x - direction.x * 20 + normal.x * 4, impactPoint.y - direction.y * 20 + normal.y * 4,
-    );
-    graphics.fillTriangle(
-      impactPoint.x + normal.x * 14, impactPoint.y + normal.y * 14,
-      impactPoint.x + direction.x * 6, impactPoint.y + direction.y * 6,
-      impactPoint.x - direction.x * 25 - normal.x * 3, impactPoint.y - direction.y * 25 - normal.y * 3,
-    );
-
-    // Main red/orange licking flame body.
-    graphics.fillStyle(0xe52a12, 1);
-    graphics.fillTriangle(
-      impactPoint.x - normal.x * 11, impactPoint.y - normal.y * 11,
-      impactPoint.x + direction.x * 9, impactPoint.y + direction.y * 9,
-      impactPoint.x - direction.x * 18 + normal.x * 2, impactPoint.y - direction.y * 18 + normal.y * 2,
-    );
-    graphics.fillTriangle(
-      impactPoint.x + normal.x * 10, impactPoint.y + normal.y * 10,
-      impactPoint.x + direction.x * 8, impactPoint.y + direction.y * 8,
-      impactPoint.x - direction.x * 16 - normal.x * 2, impactPoint.y - direction.y * 16 - normal.y * 2,
-    );
-
-    // Hot inner flame, shaped like a smaller lick of campfire.
-    graphics.fillStyle(0xff7a16, 1);
-    graphics.fillTriangle(
-      impactPoint.x - normal.x * 6, impactPoint.y - normal.y * 6,
-      impactPoint.x + direction.x * 10, impactPoint.y + direction.y * 10,
-      impactPoint.x - direction.x * 10 + normal.x * 1, impactPoint.y - direction.y * 10 + normal.y * 1,
-    );
+    // Round fireball body with layered red/orange/yellow heat.
+    const bx = impactPoint.x;
+    const by = impactPoint.y;
+    graphics.fillStyle(0x6f0710, 0.98);
+    graphics.fillCircle(bx, by, 19);
+    graphics.fillStyle(0xb80f17, 1);
+    graphics.fillCircle(bx + direction.x * 2, by + direction.y * 2, 16);
+    graphics.fillStyle(0xf02a16, 1);
+    graphics.fillCircle(bx + direction.x * 4, by + direction.y * 4, 12);
+    graphics.fillStyle(0xff741b, 1);
+    graphics.fillCircle(bx + direction.x * 6, by + direction.y * 6, 8);
     graphics.fillStyle(0xffd34f, 1);
-    graphics.fillTriangle(
-      impactPoint.x - normal.x * 3, impactPoint.y - normal.y * 3,
-      impactPoint.x + direction.x * 9, impactPoint.y + direction.y * 9,
-      impactPoint.x - direction.x * 5, impactPoint.y - direction.y * 5,
+    graphics.fillCircle(bx + direction.x * 8, by + direction.y * 8, 4);
+
+    // Short rounded flame tail so it still reads as fire instead of a plain glowing orb.
+    graphics.fillStyle(0x8c0b10, 0.9);
+    graphics.fillEllipse(
+      bx - direction.x * 19,
+      by - direction.y * 19,
+      22,
+      11,
+    );
+    graphics.fillStyle(0xd91d16, 0.88);
+    graphics.fillEllipse(
+      bx - direction.x * 13,
+      by - direction.y * 13,
+      18,
+      9,
     );
 
-    // Loose sparks/embers make it feel like real flickering fire.
-    for (let i = 0; i < 9; i += 1) {
-      const back = Phaser.Math.Between(4, 35);
-      const side = Phaser.Math.Between(-15, 15);
-      graphics.fillStyle(i % 3 === 0 ? 0xffd34f : i % 2 === 0 ? 0xff6518 : 0xc91d10, 0.85);
+    // Embers around the fireball.
+    for (let i = 0; i < 7; i += 1) {
+      const back = Phaser.Math.Between(8, 34);
+      const side = Phaser.Math.Between(-11, 11);
+      graphics.fillStyle(i % 2 === 0 ? 0xff3b18 : 0xff8a20, 0.84);
       graphics.fillCircle(
-        impactPoint.x - direction.x * back + normal.x * side,
-        impactPoint.y - direction.y * back + normal.y * side,
-        Phaser.Math.FloatBetween(1, 2.8),
+        bx - direction.x * back + normal.x * side,
+        by - direction.y * back + normal.y * side,
+        Phaser.Math.FloatBetween(1, 2.5),
       );
     }
 
