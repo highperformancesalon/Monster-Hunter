@@ -754,6 +754,7 @@ class WaveSpawner {
     this.spawnDelayMs = Math.max(260, 640 - this.waveNumber * 24);
     this.nextSpawnAt = time;
     this.scene.showWaveBanner(`Wave ${this.waveNumber}`);
+    this.scene.saveProgress();
   }
 
   spawnMonster() {
@@ -815,6 +816,7 @@ class GameScene extends Phaser.Scene {
     this.base = new Base(this, GAME_WIDTH / 2, GAME_HEIGHT / 2);
     this.player = new Player(this, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 190);
     this.spawner = new WaveSpawner(this, this.monsters);
+    this.loadProgress();
 
     this.physics.add.collider(this.player.sprite, this.base.sprite);
     this.physics.add.collider(this.player.sprite, this.monsters);
@@ -828,6 +830,13 @@ class GameScene extends Phaser.Scene {
     });
 
     this.createHud();
+
+    this.saveTimer = this.time.addEvent({
+      delay: 2000,
+      loop: true,
+      callback: () => this.saveProgress(),
+    });
+    window.addEventListener("pagehide", () => this.saveProgress(), { once: true });
   }
 
   update(time) {
@@ -849,6 +858,54 @@ class GameScene extends Phaser.Scene {
 
     this.updateHud();
     this.checkGameOver();
+  }
+
+  saveProgress() {
+    if (!this.player || !this.base || !this.spawner) {
+      return;
+    }
+
+    const progress = {
+      version: 1,
+      waveNumber: this.spawner.waveNumber,
+      playerHealth: this.player.health,
+      baseHealth: this.base.health,
+      selectedAbilityIndex: this.player.selectedAbilityIndex,
+      hasFlameStream: this.player.hasFlameStream,
+      fireMode: this.player.fireMode,
+    };
+
+    try {
+      localStorage.setItem("monsterHunterSave", JSON.stringify(progress));
+    } catch (error) {
+      console.warn("Could not save Monster Hunter progress.", error);
+    }
+  }
+
+  loadProgress() {
+    let progress = null;
+    try {
+      progress = JSON.parse(localStorage.getItem("monsterHunterSave") || "null");
+    } catch (error) {
+      console.warn("Could not load Monster Hunter progress.", error);
+    }
+
+    if (!progress || progress.version !== 1) {
+      return;
+    }
+
+    this.player.health = Phaser.Math.Clamp(Number(progress.playerHealth) || this.player.maxHealth, 1, this.player.maxHealth);
+    this.base.health = Phaser.Math.Clamp(Number(progress.baseHealth) || this.base.maxHealth, 1, this.base.maxHealth);
+    this.player.selectedAbilityIndex = Phaser.Math.Clamp(Number(progress.selectedAbilityIndex) || 0, 0, ABILITIES.length - 1);
+    this.player.hasFlameStream = Boolean(progress.hasFlameStream);
+    this.player.fireMode = this.player.hasFlameStream && progress.fireMode === "stream" ? "stream" : "bolt";
+
+    const savedWave = Math.max(0, Math.floor(Number(progress.waveNumber) || 0));
+    // Resume at the beginning of the saved wave instead of trying to reconstruct
+    // half-defeated monsters from before the refresh.
+    this.spawner.waveNumber = Math.max(0, savedWave - 1);
+    this.spawner.remainingToSpawn = 0;
+    this.spawner.nextWaveAt = 250;
   }
 
   onMonsterDefeated(monster) {
@@ -902,6 +959,7 @@ class GameScene extends Phaser.Scene {
     this.fireBook = null;
     this.updateHotbar();
     this.showWaveBanner("Flame Stream Unlocked!");
+    this.saveProgress();
   }
 
   createPlaceholderTextures() {
