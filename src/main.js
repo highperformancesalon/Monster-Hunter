@@ -326,6 +326,24 @@ class Player {
       9,
     );
 
+    // Wisps of flame peel away from the moving fireball.
+    for (let i = 0; i < 5; i += 1) {
+      const back = 17 + i * 7;
+      const side = Math.sin(i * 1.9) * (5 + i * 1.4);
+      const wx = bx - direction.x * back + normal.x * side;
+      const wy = by - direction.y * back + normal.y * side;
+      const tipX = wx - direction.x * (11 + i * 2) + normal.x * (i % 2 === 0 ? 5 : -5);
+      const tipY = wy - direction.y * (11 + i * 2) + normal.y * (i % 2 === 0 ? 5 : -5);
+      graphics.lineStyle(Math.max(1.5, 5 - i * 0.65), i < 2 ? 0xff3b18 : 0xb80f17, 0.72 - i * 0.08);
+      graphics.beginPath();
+      graphics.moveTo(bx - direction.x * 10, by - direction.y * 10);
+      graphics.lineTo(wx, wy);
+      graphics.lineTo(tipX, tipY);
+      graphics.strokePath();
+      graphics.fillStyle(i < 2 ? 0xff7a1b : 0xd91d16, 0.72);
+      graphics.fillCircle(wx, wy, Math.max(1.5, 4 - i * 0.45));
+    }
+
     // Embers around the fireball.
     for (let i = 0; i < 7; i += 1) {
       const back = Phaser.Math.Between(8, 34);
