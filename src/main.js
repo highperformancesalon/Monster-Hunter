@@ -242,7 +242,7 @@ class Player {
         const flameStreamOneShot =
           ability.key === "fire" &&
           this.fireMode === "stream" &&
-          this.scene.spawner.waveNumber <= 15;
+          this.scene.spawner.waveNumber <= 10;
         const damage = flameStreamOneShot
           ? monsterSprite.owner.health
           : ability.damage;
