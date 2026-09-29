@@ -125,6 +125,8 @@ class Player {
     this.selectedAbilityIndex = 0;
     this.attackCooldownMs = 360;
     this.lastAttackAt = -Infinity;
+    this.fireMode = "bolt";
+    this.hasFlameStream = false;
 
     this.sprite = scene.physics.add.sprite(x, y, "hunter-idle-0-clean");
     this.sprite.setOrigin(0.5, 0.72);
@@ -266,7 +268,11 @@ class Player {
   drawAbilityEffect(ability, impactPoint) {
     const origin = new Phaser.Math.Vector2(this.x, this.y - 24);
     if (ability.key === "fire") {
-      this.drawFireEffect(origin, impactPoint, ability.color);
+      if (this.fireMode === "stream") {
+        this.drawFlameStreamEffect(origin, impactPoint, ability.color);
+      } else {
+        this.drawFireEffect(origin, impactPoint, ability.color);
+      }
     } else if (ability.key === "water") {
       this.drawWaterEffect(origin, impactPoint, ability.color);
     } else if (ability.key === "grass") {
@@ -357,6 +363,35 @@ class Player {
     }
 
     this.fadeEffect(graphics, 320);
+  }
+
+  drawFlameStreamEffect(origin, impactPoint, color) {
+    const graphics = this.scene.add.graphics().setDepth(92);
+    const direction = new Phaser.Math.Vector2(impactPoint.x - origin.x, impactPoint.y - origin.y);
+    const distance = Math.max(direction.length(), 1);
+    direction.normalize();
+    const normal = new Phaser.Math.Vector2(-direction.y, direction.x);
+
+    graphics.lineStyle(18, 0x8d0b0d, 0.28);
+    graphics.lineBetween(origin.x, origin.y, impactPoint.x, impactPoint.y);
+    graphics.lineStyle(11, 0xe52a16, 0.7);
+    graphics.lineBetween(origin.x, origin.y, impactPoint.x, impactPoint.y);
+    graphics.lineStyle(5, 0xff7b1b, 0.95);
+    graphics.lineBetween(origin.x, origin.y, impactPoint.x, impactPoint.y);
+    graphics.lineStyle(2, 0xffd75b, 1);
+    graphics.lineBetween(origin.x, origin.y, impactPoint.x, impactPoint.y);
+
+    const segments = Math.max(10, Math.floor(distance / 10));
+    for (let i = 1; i <= segments; i += 1) {
+      const t = i / segments;
+      const px = Phaser.Math.Linear(origin.x, impactPoint.x, t);
+      const py = Phaser.Math.Linear(origin.y, impactPoint.y, t);
+      const sway = Math.sin(i * 1.8) * (5 + t * 9);
+      graphics.fillStyle(i % 3 === 0 ? 0xffd75b : i % 2 === 0 ? 0xff6a18 : 0xc51612, 0.82);
+      graphics.fillCircle(px + normal.x * sway, py + normal.y * sway, 3 + t * 6);
+    }
+
+    this.fadeEffect(graphics, 300);
   }
 
   drawWaterEffect(origin, impactPoint, color) {
@@ -535,6 +570,7 @@ class Monster {
     this.health = Math.max(0, this.health - amount);
     this.healthBar.update();
     if (this.health <= 0) {
+      this.scene.onMonsterDefeated(this);
       this.startDeath(damageType);
     }
   }
@@ -767,6 +803,8 @@ class GameScene extends Phaser.Scene {
 
   create() {
     this.isGameOver = false;
+    this.fireBookDropped = false;
+    this.fireBook = null;
     this.createPlaceholderTextures();
     this.createTransparentTexture("castleBase", "castleBase-clean", "edgeLight");
     this.createHunterAnimations();
@@ -803,6 +841,7 @@ class GameScene extends Phaser.Scene {
     this.player.update(time, this.monsters);
     this.base.update();
     this.spawner.update(time);
+    this.updateFireBookPickup();
 
     this.monsters.children.each((monsterSprite) => {
       monsterSprite.owner.update(time, this.base, this.player);
@@ -810,6 +849,59 @@ class GameScene extends Phaser.Scene {
 
     this.updateHud();
     this.checkGameOver();
+  }
+
+  onMonsterDefeated(monster) {
+    if (this.fireBookDropped || this.spawner.waveNumber !== 5 || this.spawner.remainingToSpawn !== 0) {
+      return;
+    }
+
+    const otherLiving = this.monsters.getChildren().filter(
+      (sprite) => sprite.active && sprite !== monster.sprite && sprite.owner && !sprite.owner.isDying && sprite.owner.health > 0,
+    );
+    if (otherLiving.length === 0) {
+      this.dropFireBook(monster.sprite.x, monster.sprite.y);
+    }
+  }
+
+  dropFireBook(x, y) {
+    this.fireBookDropped = true;
+    const container = this.add.container(x, y).setDepth(500);
+    const glow = this.add.circle(0, 0, 27, 0xff4318, 0.24);
+    const cover = this.add.rectangle(0, 0, 30, 38, 0x7b120f, 1).setStrokeStyle(2, 0xffb13b, 1);
+    const spine = this.add.rectangle(-11, 0, 4, 34, 0x3f0908, 1);
+    const flame = this.add.graphics();
+    flame.fillStyle(0xff3a18, 1);
+    flame.fillTriangle(-7, 8, 0, -12, 7, 8);
+    flame.fillStyle(0xffa323, 1);
+    flame.fillTriangle(-4, 7, 1, -5, 4, 7);
+    container.add([glow, cover, spine, flame]);
+    this.tweens.add({ targets: glow, alpha: 0.48, scale: 1.18, yoyo: true, repeat: -1, duration: 520 });
+    this.tweens.add({ targets: container, y: y - 6, yoyo: true, repeat: -1, duration: 700, ease: "Sine.easeInOut" });
+    this.fireBook = container;
+  }
+
+  updateFireBookPickup() {
+    if (!this.fireBook || !this.fireBook.active) {
+      return;
+    }
+    const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.fireBook.x, this.fireBook.y);
+    if (distance <= 48) {
+      this.unlockFlameStream();
+    }
+  }
+
+  unlockFlameStream() {
+    if (this.player.hasFlameStream) {
+      return;
+    }
+    this.player.hasFlameStream = true;
+    this.player.fireMode = "stream";
+    this.player.selectAbility(0);
+    this.fireBook.destroy();
+    this.fireBook = null;
+    this.updateHotbar();
+    this.showWaveBanner("Flame Stream Unlocked!");
   }
 
   createPlaceholderTextures() {
@@ -1049,6 +1141,9 @@ class GameScene extends Phaser.Scene {
 
     this.hotbarButtons.forEach(({ button, label }, index) => {
       const isSelected = index === this.player.selectedAbilityIndex;
+      if (index === 0 && this.player.hasFlameStream) {
+        label.setText("1 Flame Stream");
+      }
       button.setFillStyle(isSelected ? 0x26384c : 0x111923, isSelected ? 0.94 : 0.82);
       button.setStrokeStyle(isSelected ? 4 : 2, ABILITIES[index].color, isSelected ? 1 : 0.72);
       label.setColor(isSelected ? "#ffffff" : "#d6deea");
