@@ -86,13 +86,12 @@ class Base {
     this.maxHealth = 250;
     this.health = this.maxHealth;
     this.sprite = scene.physics.add.staticSprite(x, y, "castleBase-clean");
-    this.sprite.setOrigin(0.5, 0.86);
+    this.sprite.setOrigin(0.5, 0.68);
     this.sprite.setScale(1);
     this.sprite.setPipeline("TextureTintPipeline");
     this.sprite.refreshBody();
-    this.sprite.body.setCircle(68, 58, 102);
+    this.sprite.body.setCircle(68, 58, 92);
     this.sprite.owner = this;
-    this.shadow = scene.add.ellipse(x, y + 48, 170, 54, 0x000000, 0.28).setDepth(8);
     this.healthBar = new HealthBar(scene, this.sprite, 150, -152);
     this.healthBar.graphics.setDepth(150);
   }
@@ -110,7 +109,6 @@ class Base {
   }
 
   update() {
-    this.shadow.setPosition(this.sprite.x, this.sprite.y + 48);
     this.sprite.health = this.health;
     this.sprite.maxHealth = this.maxHealth;
     this.healthBar.owner = this.sprite;
@@ -129,15 +127,14 @@ class Player {
     this.lastAttackAt = -Infinity;
 
     this.sprite = scene.physics.add.sprite(x, y, "hunter-idle-0-clean");
-    this.sprite.setOrigin(0.5, 0.9);
+    this.sprite.setOrigin(0.5, 0.72);
     this.sprite.setScale(0.85);
     this.sprite.setCollideWorldBounds(true);
     this.sprite.body.setSize(30, 34);
-    this.sprite.body.setOffset(20, 64);
+    this.sprite.body.setOffset(20, 58);
     this.sprite.owner = this;
     this.sprite.setDepth(35);
     this.sprite.setPipeline("TextureTintPipeline");
-    this.shadow = scene.add.ellipse(x, y + 24, 58, 20, 0x000000, 0.32).setDepth(30);
     this.sprite.play("hunter-idle");
     this.healthBar = new HealthBar(scene, this.sprite, 58, -58, COLORS.playerHealth);
     this.healthBar.graphics.setDepth(150);
@@ -214,9 +211,6 @@ class Player {
     } else {
       this.sprite.play("hunter-idle", true);
     }
-
-    this.shadow.setPosition(this.sprite.x, this.sprite.y + 24);
-    this.shadow.setDepth(30 + this.sprite.y / GAME_HEIGHT);
     this.sprite.setDepth(35 + this.sprite.y / GAME_HEIGHT);
   }
 
@@ -465,12 +459,11 @@ class Monster {
     this.lastDamageType = null;
 
     this.sprite = scene.physics.add.sprite(x, y, "thornshell-walk-0-clean");
-    this.sprite.setOrigin(0.5, 0.82);
+    this.sprite.setOrigin(0.5, 0.64);
     this.sprite.setScale(0.82);
     this.sprite.body.setSize(46, 28);
-    this.sprite.body.setOffset(42, 56);
+    this.sprite.body.setOffset(42, 48);
     this.sprite.owner = this;
-    this.shadow = scene.add.ellipse(x, y + 18, 78, 25, 0x000000, 0.34).setDepth(8);
     this.sprite.play("thornshell-walk");
     this.healthBar = new MonsterHealthBar(scene, this);
   }
@@ -502,8 +495,6 @@ class Monster {
     }
 
     this.sprite.flipX = base.x > this.sprite.x;
-    this.shadow.setPosition(this.sprite.x, this.sprite.y + 18);
-    this.shadow.setDepth(8 + this.sprite.y / GAME_HEIGHT);
     this.sprite.setDepth(10 + this.sprite.y / GAME_HEIGHT);
     this.healthBar.update();
   }
