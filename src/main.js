@@ -239,7 +239,11 @@ class Player {
 
       const distance = Phaser.Math.Distance.Between(impactPoint.x, impactPoint.y, monsterSprite.x, monsterSprite.y);
       if (distance <= ability.radius) {
-        const damage = ability.key === "fire" && this.fireMode === "stream"
+        const flameStreamOneShot =
+          ability.key === "fire" &&
+          this.fireMode === "stream" &&
+          this.scene.spawner.waveNumber <= 15;
+        const damage = flameStreamOneShot
           ? monsterSprite.owner.health
           : ability.damage;
         monsterSprite.owner.takeDamage(damage, ability.key);
