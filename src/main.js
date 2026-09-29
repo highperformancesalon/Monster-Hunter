@@ -366,32 +366,77 @@ class Player {
   }
 
   drawFlameStreamEffect(origin, impactPoint, color) {
-    const graphics = this.scene.add.graphics().setDepth(92);
+    const graphics = this.scene.add.graphics().setDepth(94);
     const direction = new Phaser.Math.Vector2(impactPoint.x - origin.x, impactPoint.y - origin.y);
     const distance = Math.max(direction.length(), 1);
     direction.normalize();
     const normal = new Phaser.Math.Vector2(-direction.y, direction.x);
 
-    graphics.lineStyle(18, 0x8d0b0d, 0.28);
-    graphics.lineBetween(origin.x, origin.y, impactPoint.x, impactPoint.y);
-    graphics.lineStyle(11, 0xe52a16, 0.7);
-    graphics.lineBetween(origin.x, origin.y, impactPoint.x, impactPoint.y);
-    graphics.lineStyle(5, 0xff7b1b, 0.95);
-    graphics.lineBetween(origin.x, origin.y, impactPoint.x, impactPoint.y);
-    graphics.lineStyle(2, 0xffd75b, 1);
-    graphics.lineBetween(origin.x, origin.y, impactPoint.x, impactPoint.y);
-
-    const segments = Math.max(10, Math.floor(distance / 10));
-    for (let i = 1; i <= segments; i += 1) {
+    // Flame Stream is a rolling mass of connected fire, not a laser beam.
+    // Build overlapping flame bodies from the hunter's hand to the target.
+    const segments = Math.max(8, Math.floor(distance / 15));
+    for (let i = 0; i <= segments; i += 1) {
       const t = i / segments;
       const px = Phaser.Math.Linear(origin.x, impactPoint.x, t);
       const py = Phaser.Math.Linear(origin.y, impactPoint.y, t);
-      const sway = Math.sin(i * 1.8) * (5 + t * 9);
-      graphics.fillStyle(i % 3 === 0 ? 0xffd75b : i % 2 === 0 ? 0xff6a18 : 0xc51612, 0.82);
-      graphics.fillCircle(px + normal.x * sway, py + normal.y * sway, 3 + t * 6);
+      const sway = Math.sin(i * 1.55) * (3 + t * 7);
+      const cx = px + normal.x * sway;
+      const cy = py + normal.y * sway;
+      const size = 7 + t * 8 + Math.sin(i * 2.2) * 2;
+
+      // Deep-red outer fire mass.
+      graphics.fillStyle(0x7a0710, 0.82);
+      graphics.fillCircle(cx, cy, size + 5);
+
+      // Red/orange body.
+      graphics.fillStyle(i % 2 === 0 ? 0xc91614 : 0xe52a16, 0.96);
+      graphics.fillCircle(cx + direction.x * 2, cy + direction.y * 2, size + 1);
+
+      // Hot inner flame.
+      graphics.fillStyle(0xff6b18, 0.96);
+      graphics.fillCircle(cx + direction.x * 4, cy + direction.y * 4, Math.max(4, size * 0.58));
+      graphics.fillStyle(0xffd65a, 0.9);
+      graphics.fillCircle(cx + direction.x * 6, cy + direction.y * 6, Math.max(2, size * 0.25));
+
+      // Curved wisps peel off each rolling fire mass.
+      const side = i % 2 === 0 ? 1 : -1;
+      const wispX = cx - direction.x * (10 + size * 0.45) + normal.x * side * (7 + t * 8);
+      const wispY = cy - direction.y * (10 + size * 0.45) + normal.y * side * (7 + t * 8);
+      const tipX = wispX - direction.x * (10 + t * 8) + normal.x * side * 5;
+      const tipY = wispY - direction.y * (10 + t * 8) + normal.y * side * 5;
+      graphics.lineStyle(Math.max(2, 5 - t * 2), i % 3 === 0 ? 0xff4a18 : 0xb80f17, 0.72);
+      graphics.beginPath();
+      graphics.moveTo(cx, cy);
+      graphics.lineTo(wispX, wispY);
+      graphics.lineTo(tipX, tipY);
+      graphics.strokePath();
     }
 
-    this.fadeEffect(graphics, 300);
+    // Big raging flame head at the end of the stream.
+    const bx = impactPoint.x;
+    const by = impactPoint.y;
+    graphics.fillStyle(0x69060d, 0.9);
+    graphics.fillCircle(bx, by, 27);
+    graphics.fillStyle(0xb80f17, 1);
+    graphics.fillCircle(bx + direction.x * 3, by + direction.y * 3, 23);
+    graphics.fillStyle(0xef2b16, 1);
+    graphics.fillCircle(bx + direction.x * 6, by + direction.y * 6, 18);
+    graphics.fillStyle(0xff781c, 1);
+    graphics.fillCircle(bx + direction.x * 9, by + direction.y * 9, 12);
+    graphics.fillStyle(0xffd65a, 1);
+    graphics.fillCircle(bx + direction.x * 11, by + direction.y * 11, 5);
+
+    // Flying embers make the whole spell feel violent and alive.
+    for (let i = 0; i < 18; i += 1) {
+      const t = Phaser.Math.FloatBetween(0.08, 1);
+      const px = Phaser.Math.Linear(origin.x, bx, t);
+      const py = Phaser.Math.Linear(origin.y, by, t);
+      const spread = Phaser.Math.Between(-24, 24);
+      graphics.fillStyle(i % 3 === 0 ? 0xffd65a : i % 2 === 0 ? 0xff5a18 : 0xc91614, 0.82);
+      graphics.fillCircle(px + normal.x * spread, py + normal.y * spread, Phaser.Math.FloatBetween(1.2, 3.2));
+    }
+
+    this.fadeEffect(graphics, 360);
   }
 
   drawWaterEffect(origin, impactPoint, color) {
